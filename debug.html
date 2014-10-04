@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Time Controller Debug</title>
+</head>
+<body bgcolor="lightgray" align="center">
+  <h1>Time Controller</h1>
+  <hr>
+  <a target="_blank" href="/debug.html">Open copy</a>
+  <script src="time-controller.js"></script>
+  <script>
+    window._resetTimeController = function(){
+      localStorage.removeItem('TIME_CONTROLLER_time');
+      localStorage.removeItem('TIME_CONTROLLER_date');
+      localStorage.removeItem('TIME_CONTROLLER_window');
+    };
+    </script>
+</body>
+</html>
