@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Time Controller
-// @version      0.1
+// @version      1.0
 // @description  Prevents spending too much time on time-killing sites like Facebook or Youtube (20 minutes max by default)
 // @author       Egor Vinogradov
 // @homepage     http://egorvinogradov.com
