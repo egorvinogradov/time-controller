@@ -21,15 +21,14 @@ var REDIRECT_PAGE = 'http://bit.ly/1sTtwbW'  // URL where script sends after tim
 
 var LOCAL_STORAGE_PREFIX_TIME = 'TIME_CONTROLLER_time';
 var LOCAL_STORAGE_PREFIX_DATE = 'TIME_CONTROLLER_date';
-var LOCAL_STORAGE_PREFIX_WINDOW = 'TIME_CONTROLLER_window';
 var CHECK_INTERVAL = 1000;
 var CLOCK_ID = 'time_controller';
 
 var dayLimit = DAY_LIMIT_MINUTES * 60 * 1000;
 var initialized = false;
 
-window._time_controller_clock = window._time_controller_clock || null;
-window._time_controller_interval = window._time_controller_interval || null;
+window.timeControllerClock = window.timeControllerClock || null;
+window.timeControllerInterval = window.timeControllerInterval || null;
 
 function initialize(){
 
@@ -42,9 +41,6 @@ function initialize(){
     return;
   }
 
-  var windowID = +new Date();
-  localStorage.setItem(LOCAL_STORAGE_PREFIX_WINDOW, windowID);
-
   var today = new Date().toLocaleDateString();
   var storageDate = localStorage.getItem(LOCAL_STORAGE_PREFIX_DATE);
 
@@ -53,34 +49,31 @@ function initialize(){
     localStorage.removeItem(LOCAL_STORAGE_PREFIX_TIME);
   }
 
-  var timeSpent = +localStorage.getItem(LOCAL_STORAGE_PREFIX_TIME) || 0;
-  var timeLeft = dayLimit - timeSpent;
+  var time = getTime();
 
-  if ( timeLeft <= 0 ) {
+  watchFocusChange(function(state){
+    time = getTime();
+  });
+
+  if ( time.left <= 0 ) {
     timeOver();
     return;
   }
 
-  _time_controller_clock = document.getElementById(CLOCK_ID);
-  if ( !_time_controller_clock ) {
-    _time_controller_clock = createClock();
+  timeControllerClock = document.getElementById(CLOCK_ID);
+  if ( !timeControllerClock ) {
+    timeControllerClock = createClock();
   }
 
-  clearInterval(_time_controller_interval);
-  _time_controller_interval = setInterval(function(){
-
-    storageId = +localStorage.getItem(LOCAL_STORAGE_PREFIX_WINDOW);
-    if ( storageId !== windowID ) {
-      stopWatching();
-      return;
-    };
+  clearInterval(timeControllerInterval);
+  timeControllerInterval = setInterval(function(){
 
     if ( document.visibilityState === 'visible' ) {
-      timeSpent += CHECK_INTERVAL;
-      localStorage.setItem(LOCAL_STORAGE_PREFIX_TIME, timeSpent);
-      updateClock(timeSpent);
+      time.spent += CHECK_INTERVAL;
+      localStorage.setItem(LOCAL_STORAGE_PREFIX_TIME, time.spent);
+      updateClock(time.spent);
 
-      if ( timeSpent >= dayLimit ) {
+      if ( time.spent >= dayLimit ) {
         timeOver();
         return;
       }
@@ -90,15 +83,26 @@ function initialize(){
 
 };
 
+function getTime(){
+
+  var timeSpent = +localStorage.getItem(LOCAL_STORAGE_PREFIX_TIME) || 0;
+  var timeLeft = dayLimit - timeSpent;
+
+  return {
+    spent: timeSpent,
+    left: timeLeft
+  }
+};
+
 function createClock(){
-  var element = createElement('div', { innerHTML: '00:00', id: CLOCK_ID }, {
+  var element = createElement('div', { innerHTML: '--:--', id: CLOCK_ID }, {
     position: 'fixed',
     zIndex: '100000000000',
     top: 0,
     left: 0,
     backgroundColor: 'white',
     padding: '15px',
-    fontFamily: 'sans-serif',
+    fontFamily: 'Menlo, monospace',
     fontSize: '24px',
     fontWeight: 'bold'
   });
@@ -130,7 +134,7 @@ function updateClock(timeSpent){
   var seconds = (timeLeft % (60 * 1000)) / 1000;
 
   if ( minutes < 5 ) {
-    _time_controller_clock.style.color = 'red';
+    timeControllerClock.style.color = 'red';
   }
   if ( minutes < 10 ) {
     minutes = '0' + minutes;
@@ -138,17 +142,17 @@ function updateClock(timeSpent){
   if ( seconds < 10 ) {
     seconds = '0' + seconds;
   }
-  _time_controller_clock.innerHTML = minutes + ':' + seconds;
+  timeControllerClock.innerHTML = minutes + ':' + seconds;
 
 };
 
-function stopWatching(){
-  clearInterval(_time_controller_interval);
-  _time_controller_clock.parentElement.removeChild(_time_controller_clock);
-};
+// function stopWatching(){
+//   clearInterval(timeControllerInterval);
+//   timeControllerClock.parentElement.removeChild(timeControllerClock);
+// };
 
 function timeOver(){
-  clearInterval(_time_controller_interval);
+  clearInterval(timeControllerInterval);
   setTimeout(function(){
     alert('TIME FOR TODAY IS OVER');
     setTimeout(function(){
@@ -156,6 +160,32 @@ function timeOver(){
     }, 1000);
   }, 1000)
 };
+
+function watchFocusChange(callback){
+
+  var hidden = "hidden";
+
+  if (hidden in document)
+    document.addEventListener("visibilitychange", onchange);
+  else if ((hidden = "webkitHidden") in document)
+    document.addEventListener("webkitvisibilitychange", onchange);
+
+  function onchange (evt) {
+    var v = "visible", h = "hidden",
+        evtMap = {
+          focus:v, focusin:v, pageshow:v, blur:h, focusout:h, pagehide:h
+        };
+
+    evt = evt || window.event;
+    if (evt.type in evtMap)
+      callback(evtMap[evt.type]);
+    else
+      callback(this[hidden] ? "hidden" : "visible");
+  }
+
+  if( document[hidden] !== undefined )
+    onchange({type: document[hidden] ? "blur" : "focus"});
+}
 
 function getCurrentDomain(){
   var domain = window.location.hostname.split('.');
