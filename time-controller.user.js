@@ -146,11 +146,6 @@ function updateClock(timeSpent){
 
 };
 
-// function stopWatching(){
-//   clearInterval(timeControllerInterval);
-//   timeControllerClock.parentElement.removeChild(timeControllerClock);
-// };
-
 function timeOver(){
   clearInterval(timeControllerInterval);
   setTimeout(function(){
